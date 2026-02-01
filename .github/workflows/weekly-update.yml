@@ -1,0 +1,59 @@
+# Weekly Deal Analyzer Update
+# 
+# This workflow runs every Sunday at 8:00 AM UTC (3:00 AM Central)
+# It fetches the latest listings, analyzes them, and commits the results
+#
+# The JSON files are committed back to the repo using the "Flat Data" pattern
+# which allows the frontend to fetch them directly from GitHub/jsDelivr CDN
+
+name: Weekly Deal Analysis
+
+on:
+  # Run every Sunday at 8:00 AM UTC
+  schedule:
+    - cron: '0 8 * * 0'
+  
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+      
+      # Run the analysis script
+      - name: Run deal analyzer
+        env:
+          RENTCAST_API_KEY: ${{ secrets.RENTCAST_API_KEY }}
+        run: npm run analyze
+      
+      # Commit and push the updated JSON files
+      - name: Commit and push changes
+        run: |
+          git config user.name "Deal Analyzer Bot"
+          git config user.email "bot@templetxhomes.net"
+          
+          # Add the data files
+          git add data/*.json
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update deals: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
