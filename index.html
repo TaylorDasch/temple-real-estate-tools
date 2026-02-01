@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temple TX Investment Deal Analyzer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 1.5rem 2rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: #f8fafc;
+      margin-bottom: 0.25rem;
+    }
+
+    header .subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: #1e293b;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.15s;
+    }
+
+    .tab:hover { border-color: #60a5fa; color: #e2e8f0; }
+    .tab.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      padding: 1.25rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .stat {
+      background: #1e293b;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .stat .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .stat .label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .deals {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+      padding: 0 2rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      transition: border-color 0.15s;
+    }
+
+    .card:hover { border-color: #475569; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-rank {
+      background: #334155;
+      color: #e2e8f0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .card-yield {
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.25rem;
+    }
+
+    .yield-high { background: #166534; color: #4ade80; }
+    .yield-mid { background: #854d0e; color: #fbbf24; }
+    .yield-low { background: #7f1d1d; color: #fca5a5; }
+
+    .card-address {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-details {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .metric .key { color: #94a3b8; }
+    .metric .val { color: #e2e8f0; font-weight: 600; }
+
+    .badges {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 1rem;
+      font-weight: 600;
+    }
+
+    .badge-pass { background: #166534; color: #4ade80; }
+    .badge-fail { background: #334155; color: #94a3b8; }
+    .badge-dom { background: #1e3a5f; color: #7dd3fc; }
+
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .error {
+      text-align: center;
+      padding: 2rem;
+      color: #fca5a5;
+    }
+
+    @media (max-width: 600px) {
+      .deals { grid-template-columns: 1fr; padding: 0 1rem 1rem; }
+      .summary { padding: 1rem; }
+      header { padding: 1rem; }
+      .tabs { padding: 0.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Temple TX Investment Deal Analyzer</h1>
+    <div class="subtitle" id="updated"></div>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+  <section class="summary" id="summary"></section>
+  <section class="deals" id="deals">
+    <div class="loading">Loading deals...</div>
+  </section>
+
+  <script>
+    const MARKETS = [
+      { id: 'temple-belton', label: 'Temple / Belton' },
+      { id: 'harker-heights', label: 'Harker Heights' },
+      { id: 'killeen', label: 'Killeen' },
+    ];
+
+    const BASE = 'https://cdn.jsdelivr.net/gh/TaylorDasch/temple-real-estate-tools@main/data';
+    const cache = {};
+    let activeMarket = MARKETS[0].id;
+
+    function $(id) { return document.getElementById(id); }
+    function fmt(n) { return n.toLocaleString('en-US'); }
+    function money(n) { return '$' + fmt(n); }
+
+    function yieldClass(y) {
+      if (y >= 12) return 'yield-high';
+      if (y >= 8) return 'yield-mid';
+      return 'yield-low';
+    }
+
+    function renderTabs() {
+      $('tabs').innerHTML = MARKETS.map(m =>
+        `<button class="tab ${m.id === activeMarket ? 'active' : ''}" data-market="${m.id}">${m.label}</button>`
+      ).join('');
+    }
+
+    function renderSummary(data) {
+      const s = data.summary;
+      const updated = new Date(data.lastUpdated);
+      $('updated').textContent = 'Last updated: ' + updated.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+
+      $('summary').innerHTML = `
+        <div class="stat"><div class="value">${s.totalDeals}</div><div class="label">Deals</div></div>
+        <div class="stat"><div class="value">${s.topYield}%</div><div class="label">Top Yield</div></div>
+        <div class="stat"><div class="value">${s.avgGrossYield}%</div><div class="label">Avg Yield</div></div>
+        <div class="stat"><div class="value">${money(s.avgPrice)}</div><div class="label">Avg Price</div></div>
+        <div class="stat"><div class="value">${money(s.lowestPrice)}</div><div class="label">Lowest Price</div></div>
+      `;
+    }
+
+    function renderDeals(data) {
+      if (!data.deals.length) {
+        $('deals').innerHTML = '<div class="loading">No deals found for this market.</div>';
+        return;
+      }
+
+      $('deals').innerHTML = data.deals.map(d => `
+        <div class="card">
+          <div class="card-header">
+            <span class="card-rank">#${d.rank}</span>
+            <span class="card-yield ${yieldClass(d.grossYield)}">${d.grossYield}% yield</span>
+          </div>
+          <div class="card-address">${d.address}</div>
+          <div class="card-details">
+            ${d.bedrooms} bd / ${d.bathrooms} ba &middot; ${fmt(d.squareFootage)} sqft
+            &middot; ${d.propertyType}${d.yearBuilt ? ' &middot; Built ' + d.yearBuilt : ''}
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="key">Price</span><span class="val">${money(d.price)}</span></div>
+            <div class="metric"><span class="key">Est. Rent</span><span class="val">${money(d.estMonthlyRent)}/mo</span></div>
+            <div class="metric"><span class="key">Cash Flow</span><span class="val">${money(d.estMonthlyCashFlow)}/mo</span></div>
+            <div class="metric"><span class="key">GRM</span><span class="val">${d.grm}</span></div>
+            <div class="metric"><span class="key">Rent Range</span><span class="val">${money(d.rentRangeLow)}-${money(d.rentRangeHigh)}</span></div>
+          </div>
+          <div class="badges">
+            <span class="badge ${d.meetsOnePercentRule ? 'badge-pass' : 'badge-fail'}">
+              1% Rule: ${d.meetsOnePercentRule ? 'PASS' : 'FAIL'}
+            </span>
+            <span class="badge badge-dom">${d.daysOnMarket} days on market</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadMarket(marketId) {
+      activeMarket = marketId;
+      renderTabs();
+
+      if (cache[marketId]) {
+        renderSummary(cache[marketId]);
+        renderDeals(cache[marketId]);
+        return;
+      }
+
+      $('deals').innerHTML = '<div class="loading">Loading deals...</div>';
+      $('summary').innerHTML = '';
+
+      try {
+        const res = await fetch(`${BASE}/${marketId}-deals.json`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        cache[marketId] = data;
+        renderSummary(data);
+        renderDeals(data);
+      } catch (e) {
+        $('deals').innerHTML = `<div class="error">Failed to load deals: ${e.message}</div>`;
+      }
+    }
+
+    $('tabs').addEventListener('click', e => {
+      if (e.target.dataset.market) loadMarket(e.target.dataset.market);
+    });
+
+    renderTabs();
+    loadMarket(activeMarket);
+  </script>
+</body>
+</html>
