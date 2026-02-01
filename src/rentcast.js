@@ -85,7 +85,7 @@ async function getRentEstimate(address, bedrooms, bathrooms, squareFootage) {
       squareFootage: squareFootage || 1500,
     };
 
-    const response = await api.get('/avm/rent', { params });
+    const response = await api.get('/avm/rent/long-term', { params });
     apiCallCount++;
     
     // Respect rate limits
