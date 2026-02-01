@@ -32,6 +32,37 @@
       color: #94a3b8;
     }
 
+    .contact-btn {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.5rem 1.25rem;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .contact-btn:hover { background: #1d4ed8; }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem 2rem;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
     .tabs {
       display: flex;
       justify-content: center;
@@ -205,12 +236,15 @@
   <header>
     <h1>Temple TX Investment Deal Analyzer</h1>
     <div class="subtitle" id="updated"></div>
+    <a class="contact-btn" href="https://templetxhomes.net/contact">Contact Taylor</a>
   </header>
   <nav class="tabs" id="tabs"></nav>
   <section class="summary" id="summary"></section>
   <section class="deals" id="deals">
     <div class="loading">Loading deals...</div>
   </section>
+
+  <footer>Data provided by Taylor Dasch | <a href="https://templetxhomes.net">templetxhomes.net</a></footer>
 
   <script>
     const MARKETS = [
