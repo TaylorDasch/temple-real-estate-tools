@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neighborhood Comparison | Temple TX Homes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b;line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.75rem;margin-bottom:4px}
+.subtitle{color:#64748b;margin-bottom:24px;font-size:0.95rem}
+.selector{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.selector label{display:flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:0.9rem;transition:all .15s;user-select:none}
+.selector label:hover{border-color:#059669}
+.selector input:checked+span{color:#059669;font-weight:600}
+.selector label:has(input:checked){border-color:#059669;background:#ecfdf5}
+.selector input{accent-color:#059669;width:16px;height:16px}
+.hint{color:#94a3b8;font-size:0.85rem;margin-bottom:16px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid #e2e8f0}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th,td{padding:12px 16px;text-align:center;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+th{background:#1e293b;color:#fff;font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.03em}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;z-index:1}
+td:first-child{background:#f8fafc;font-weight:600;font-size:0.88rem}
+th:first-child{background:#1e293b}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f1f5f9}
+tr:hover td:first-child{background:#f1f5f9}
+.best{color:#059669;font-weight:700}
+.worst{color:#dc2626;font-weight:500}
+.empty{text-align:center;padding:48px 16px;color:#94a3b8;font-size:1rem}
+footer{text-align:center;margin-top:32px;color:#94a3b8;font-size:0.8rem}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Neighborhood Comparison</h1>
+<p class="subtitle">Compare Central Texas neighborhoods side-by-side for real estate investment.</p>
+
+<div class="selector" id="selector"></div>
+<p class="hint">Select 2–6 neighborhoods to compare.</p>
+
+<div id="output"><div class="empty">Select at least 2 neighborhoods above to see a comparison.</div></div>
+
+<footer>Data sourced from public records, Realtor.com & Zillow averages. For informational purposes only.<br>&copy; templetxhomes.net</footer>
+</div>
+
+<script>
+// ============================================================
+// NEIGHBORHOOD_DATA — Update values here as market data changes
+// ============================================================
+const NEIGHBORHOOD_DATA = {
+  "West Temple (76502)": {
+    medianPrice: 265000,
+    avgRent: 1550,
+    taxRate: 2.36,
+    schoolRating: 7,
+    commuteBSW: 8,
+    commuteCavazos: 28
+  },
+  "Morgan's Point": {
+    medianPrice: 310000,
+    avgRent: 1700,
+    taxRate: 2.18,
+    schoolRating: 8,
+    commuteBSW: 15,
+    commuteCavazos: 35
+  },
+  "Belton": {
+    medianPrice: 285000,
+    avgRent: 1600,
+    taxRate: 2.28,
+    schoolRating: 8,
+    commuteBSW: 12,
+    commuteCavazos: 30
+  },
+  "Killeen": {
+    medianPrice: 215000,
+    avgRent: 1350,
+    taxRate: 2.48,
+    schoolRating: 5,
+    commuteBSW: 22,
+    commuteCavazos: 10
+  },
+  "Harker Heights": {
+    medianPrice: 255000,
+    avgRent: 1500,
+    taxRate: 2.42,
+    schoolRating: 6,
+    commuteBSW: 18,
+    commuteCavazos: 12
+  },
+  "Salado": {
+    medianPrice: 375000,
+    avgRent: 1850,
+    taxRate: 2.05,
+    schoolRating: 9,
+    commuteBSW: 20,
+    commuteCavazos: 40
+  }
+};
+
+const ROWS = [
+  { key: "medianPrice", label: "Median Home Price", fmt: v => "$" + v.toLocaleString(), best: "low" },
+  { key: "avgRent", label: "Average Rent (mo)", fmt: v => "$" + v.toLocaleString(), best: "high" },
+  { key: "taxRate", label: "Property Tax Rate", fmt: v => v.toFixed(2) + "%", best: "low" },
+  { key: "schoolRating", label: "School Rating (1-10)", fmt: v => v + " / 10", best: "high" },
+  { key: "commuteBSW", label: "Commute to BSW Medical", fmt: v => v + " min", best: "low" },
+  { key: "commuteCavazos", label: "Commute to Ft. Cavazos", fmt: v => v + " min", best: "low" }
+];
+
+const names = Object.keys(NEIGHBORHOOD_DATA);
+const selectorEl = document.getElementById("selector");
+const outputEl = document.getElementById("output");
+
+names.forEach(n => {
+  const lbl = document.createElement("label");
+  lbl.innerHTML = `<input type="checkbox" value="${n}"><span>${n}</span>`;
+  selectorEl.appendChild(lbl);
+});
+
+selectorEl.addEventListener("change", render);
+
+function render() {
+  const checked = [...selectorEl.querySelectorAll("input:checked")].map(i => i.value);
+  if (checked.length < 2) {
+    outputEl.innerHTML = '<div class="empty">Select at least 2 neighborhoods above to see a comparison.</div>';
+    return;
+  }
+
+  let html = '<div class="table-wrap"><table><thead><tr><th>Metric</th>';
+  checked.forEach(n => html += `<th>${n}</th>`);
+  html += "</tr></thead><tbody>";
+
+  ROWS.forEach(row => {
+    const vals = checked.map(n => NEIGHBORHOOD_DATA[n][row.key]);
+    const bestVal = row.best === "low" ? Math.min(...vals) : Math.max(...vals);
+    const worstVal = row.best === "low" ? Math.max(...vals) : Math.min(...vals);
+
+    html += `<tr><td>${row.label}</td>`;
+    vals.forEach(v => {
+      let cls = "";
+      if (vals.length > 1) {
+        if (v === bestVal) cls = "best";
+        else if (v === worstVal) cls = "worst";
+      }
+      html += `<td class="${cls}">${row.fmt(v)}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table></div>";
+  outputEl.innerHTML = html;
+}
+</script>
+</body>
+</html>
