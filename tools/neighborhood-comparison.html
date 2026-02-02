@@ -9,8 +9,11 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b;line-height:1.6}
 .container{max-width:1100px;margin:0 auto;padding:24px 16px}
 h1{font-size:1.75rem;margin-bottom:4px}
-.subtitle{color:#64748b;margin-bottom:24px;font-size:0.95rem}
-.selector{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.subtitle{color:#64748b;margin-bottom:16px;font-size:0.95rem}
+.seo-text{color:#475569;font-size:0.9rem;margin-bottom:24px;line-height:1.7}
+.district-group{margin-bottom:16px}
+.district-group h3{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:6px}
+.district-group .checks{display:flex;flex-wrap:wrap;gap:8px}
 .selector label{display:flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:0.9rem;transition:all .15s;user-select:none}
 .selector label:hover{border-color:#059669}
 .selector input:checked+span{color:#059669;font-weight:600}
@@ -30,6 +33,9 @@ tr:hover td:first-child{background:#f1f5f9}
 .best{color:#059669;font-weight:700}
 .worst{color:#dc2626;font-weight:500}
 .empty{text-align:center;padding:48px 16px;color:#94a3b8;font-size:1rem}
+.cta{text-align:center;margin-top:28px;font-size:0.95rem;color:#1e293b}
+.cta a{color:#059669;font-weight:700;text-decoration:none}
+.cta a:hover{text-decoration:underline}
 footer{text-align:center;margin-top:32px;color:#94a3b8;font-size:0.8rem}
 </style>
 </head>
@@ -37,13 +43,16 @@ footer{text-align:center;margin-top:32px;color:#94a3b8;font-size:0.8rem}
 <div class="container">
 <h1>Neighborhood Comparison</h1>
 <p class="subtitle">Compare Central Texas neighborhoods side-by-side for real estate investment.</p>
+<p class="seo-text">Compare neighborhoods across Temple, Belton, Killeen, Harker Heights, Salado, and Morgan's Point by school district. This tool shows median home prices, average rents, property tax rates, school ratings, and commute times to Baylor Scott &amp; White Medical Center and Fort Cavazos.</p>
 
 <div class="selector" id="selector"></div>
 <p class="hint">Select 2–6 neighborhoods to compare.</p>
 
 <div id="output"><div class="empty">Select at least 2 neighborhoods above to see a comparison.</div></div>
 
-<footer>Data sourced from public records, Realtor.com & Zillow averages. For informational purposes only.<br>&copy; templetxhomes.net</footer>
+<div class="cta">Need help deciding? <a href="https://templetxhomes.net/contact">Schedule a free consultation with Taylor Dasch.</a></div>
+
+<footer>Data sourced from public records, Realtor.com &amp; Zillow averages. Last updated: February 2026. For informational purposes only.<br>&copy; templetxhomes.net</footer>
 </div>
 
 <script>
@@ -51,13 +60,21 @@ footer{text-align:center;margin-top:32px;color:#94a3b8;font-size:0.8rem}
 // NEIGHBORHOOD_DATA — Update values here as market data changes
 // ============================================================
 const NEIGHBORHOOD_DATA = {
-  "West Temple (76502)": {
+  "West Temple (Belton ISD)": {
     medianPrice: 265000,
     avgRent: 1550,
     taxRate: 2.36,
     schoolRating: 7,
     commuteBSW: 8,
     commuteCavazos: 28
+  },
+  "Belton": {
+    medianPrice: 285000,
+    avgRent: 1600,
+    taxRate: 2.28,
+    schoolRating: 8,
+    commuteBSW: 12,
+    commuteCavazos: 30
   },
   "Morgan's Point": {
     medianPrice: 310000,
@@ -67,13 +84,21 @@ const NEIGHBORHOOD_DATA = {
     commuteBSW: 15,
     commuteCavazos: 35
   },
-  "Belton": {
-    medianPrice: 285000,
-    avgRent: 1600,
-    taxRate: 2.28,
-    schoolRating: 8,
-    commuteBSW: 12,
-    commuteCavazos: 30
+  "Central/North Temple": {
+    medianPrice: 230000,
+    avgRent: 1400,
+    taxRate: 2.40,
+    schoolRating: 5,
+    commuteBSW: 5,
+    commuteCavazos: 25
+  },
+  "South Temple": {
+    medianPrice: 210000,
+    avgRent: 1300,
+    taxRate: 2.40,
+    schoolRating: 5,
+    commuteBSW: 10,
+    commuteCavazos: 22
   },
   "Killeen": {
     medianPrice: 215000,
@@ -101,6 +126,16 @@ const NEIGHBORHOOD_DATA = {
   }
 };
 
+// ============================================================
+// DISTRICTS — Groups neighborhoods by school district
+// ============================================================
+const DISTRICTS = [
+  { name: "Belton ISD", areas: ["West Temple (Belton ISD)", "Belton", "Morgan's Point"] },
+  { name: "Temple ISD", areas: ["Central/North Temple", "South Temple"] },
+  { name: "Killeen ISD", areas: ["Killeen", "Harker Heights"] },
+  { name: "Salado ISD", areas: ["Salado"] }
+];
+
 const ROWS = [
   { key: "medianPrice", label: "Median Home Price", fmt: v => "$" + v.toLocaleString(), best: "low" },
   { key: "avgRent", label: "Average Rent (mo)", fmt: v => "$" + v.toLocaleString(), best: "high" },
@@ -110,14 +145,20 @@ const ROWS = [
   { key: "commuteCavazos", label: "Commute to Ft. Cavazos", fmt: v => v + " min", best: "low" }
 ];
 
-const names = Object.keys(NEIGHBORHOOD_DATA);
 const selectorEl = document.getElementById("selector");
 const outputEl = document.getElementById("output");
 
-names.forEach(n => {
-  const lbl = document.createElement("label");
-  lbl.innerHTML = `<input type="checkbox" value="${n}"><span>${n}</span>`;
-  selectorEl.appendChild(lbl);
+DISTRICTS.forEach(d => {
+  const group = document.createElement("div");
+  group.className = "district-group";
+  group.innerHTML = `<h3>${d.name}</h3><div class="checks"></div>`;
+  const checks = group.querySelector(".checks");
+  d.areas.forEach(n => {
+    const lbl = document.createElement("label");
+    lbl.innerHTML = `<input type="checkbox" value="${n}"><span>${n}</span>`;
+    checks.appendChild(lbl);
+  });
+  selectorEl.appendChild(group);
 });
 
 selectorEl.addEventListener("change", render);
